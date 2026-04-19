@@ -149,6 +149,15 @@ struct MessageBubble: View {
                                 .stroke(Color(.systemBlue).opacity(0.3), lineWidth: 1)
                         )
 
+                    HStack {
+                        HoverImageButton(imageName: "square.on.square") {
+                            Task {
+                                await handleCopyAction()
+                            }
+                        }
+                    }
+                    .foregroundColor(.gray)
+
                 }
             }
 
