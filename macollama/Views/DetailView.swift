@@ -91,6 +91,7 @@ struct DetailView: View {
         Task {
             do {
                 var fullResponse = ""
+                var firstTokenTime: Date?
                 let stream = try await LLMService.shared.generateResponse(
                     prompt: currentText,
                     image: currentImage,
@@ -98,6 +99,9 @@ struct DetailView: View {
                 )
                 
                 for try await response in stream {
+                    if firstTokenTime == nil && !response.isEmpty {
+                        firstTokenTime = Date()
+                    }
                     fullResponse += response
                     tokenCount += response.count
 
@@ -109,15 +113,17 @@ struct DetailView: View {
                 
                 var statsMessage = ""
                 if let startTime = responseStartTime {
-                    let elapsedTime = Date().timeIntervalSince(startTime)
-                    let tokensPerSecond = Double(tokenCount) / elapsedTime
-                    statsMessage = "\n\n---\n [\(selectedModel)] \(String(format: "%.1f", tokensPerSecond)) tokens/sec"
-                    if let index = viewModel.messages.lastIndex(where: { !$0.isUser }) {
-                        viewModel.updateLastAssistantMessage(
-                            content: fullResponse + statsMessage,
-                            engine: selectedModel
-                        )
-                    }
+                    let endTime = Date()
+                    let thinkingTime = max((firstTokenTime ?? endTime).timeIntervalSince(startTime), 0)
+                    let responseTime = max(endTime.timeIntervalSince(firstTokenTime ?? endTime), 0)
+                    let tokenRateBase = max(responseTime, 0.001)
+                    let tokensPerSecond = Double(tokenCount) / tokenRateBase
+                    statsMessage = "\n\n---\n [\(selectedModel)] \(String(format: "%.1f", tokensPerSecond)) tokens/sec · Time: thinking \(String(format: "%.2f", thinkingTime))s, response \(String(format: "%.2f", responseTime))s"
+
+                    viewModel.updateLastAssistantMessage(
+                        content: fullResponse + statsMessage,
+                        engine: selectedModel
+                    )
                 }
                 
                 try DatabaseManager.shared.insert(
