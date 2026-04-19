@@ -155,6 +155,12 @@ struct MessageBubble: View {
                         )
 
                     HStack {
+                        HoverImageButton(imageName: "arrow.counterclockwise.square") {
+                            Task {
+                                await handleRetryRequestAction()
+                            }
+                        }
+                        .help("Retry request")
                         HoverImageButton(imageName: "square.on.square") {
                             Task {
                                 await handleCopyAction()
@@ -235,6 +241,21 @@ struct MessageBubble: View {
                     vm.shouldFocusTextField = true
                 }
             }
+        }
+    }
+
+    /// Reuses the current user request by starting a new chat and pre-filling the input field.
+    private func handleRetryRequestAction() async {
+        guard message.isUser else { return }
+
+        await MainActor.run {
+            let vm = ChatViewModel.shared
+            vm.startNewChat()
+            vm.messageText = message.content
+            if let image = message.image {
+                vm.selectedImage = image
+            }
+            vm.shouldFocusTextField = true
         }
     }
     
