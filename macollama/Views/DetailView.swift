@@ -112,22 +112,12 @@ struct DetailView: View {
                     let elapsedTime = Date().timeIntervalSince(startTime)
                     let tokensPerSecond = Double(tokenCount) / elapsedTime
                     statsMessage = "\n\n---\n [\(selectedModel)] \(String(format: "%.1f", tokensPerSecond)) tokens/sec"
-                    
-                    // 기존 통계 정보가 있다면 제거
-                    var cleanResponse = fullResponse
-                    if let separatorRange = fullResponse.range(of: "\n\n---\n") {
-                        cleanResponse = String(fullResponse[..<separatorRange.lowerBound])
-                    }
-                    
                     if let index = viewModel.messages.lastIndex(where: { !$0.isUser }) {
                         viewModel.updateLastAssistantMessage(
-                            content: cleanResponse + statsMessage,
+                            content: fullResponse + statsMessage,
                             engine: selectedModel
                         )
                     }
-                    
-                    // 데이터베이스에도 깨끗한 응답 + 통계 저장
-                    fullResponse = cleanResponse
                 }
                 
                 try DatabaseManager.shared.insert(
