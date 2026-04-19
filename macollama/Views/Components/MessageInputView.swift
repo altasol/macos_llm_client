@@ -77,7 +77,9 @@ struct MessageInputView: View {
                     return .ignored
                 } else {
                     if !viewModel.messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        onSendMessage()
+                        DispatchQueue.main.async {
+                            onSendMessage()
+                        }
                     }
                     return .handled
                 }
@@ -108,7 +110,9 @@ struct MessageInputView: View {
                 if isGenerating {
                     onCancelGeneration()
                 } else {
-                    onSendMessage()
+                    DispatchQueue.main.async {
+                        onSendMessage()
+                    }
                 }
             }
             .disabled(isLoadingModels)

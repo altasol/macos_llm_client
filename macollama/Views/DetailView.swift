@@ -76,7 +76,6 @@ struct DetailView: View {
             image: currentImage,
             engine: selectedModel
         )
-        viewModel.addMessage(userMessage)
         
         let waitingMessage = ChatMessage(
             id: viewModel.messages.count * 2 + 1,
@@ -86,71 +85,74 @@ struct DetailView: View {
             image: nil,
             engine: selectedModel
         )
-        viewModel.addMessage(waitingMessage)
-        
-        Task {
-            do {
-                var fullResponse = ""
-                var firstTokenTime: Date?
-                let stream = try await LLMService.shared.generateResponse(
-                    prompt: currentText,
-                    image: currentImage,
-                    model: selectedModel
-                )
-                
-                for try await response in stream {
-                    if firstTokenTime == nil && !response.isEmpty {
-                        firstTokenTime = Date()
+        DispatchQueue.main.async {
+            viewModel.addMessage(userMessage)
+            viewModel.addMessage(waitingMessage)
+
+            Task {
+                do {
+                    var fullResponse = ""
+                    var firstTokenTime: Date?
+                    let stream = try await LLMService.shared.generateResponse(
+                        prompt: currentText,
+                        image: currentImage,
+                        model: selectedModel
+                    )
+                    
+                    for try await response in stream {
+                        if firstTokenTime == nil && !response.isEmpty {
+                            firstTokenTime = Date()
+                        }
+                        fullResponse += response
+                        tokenCount += response.count
+
+                        viewModel.updateLastAssistantMessage(
+                            content: fullResponse,
+                            engine: selectedModel
+                        )
                     }
-                    fullResponse += response
-                    tokenCount += response.count
+                    
+                    var statsMessage = ""
+                    if let startTime = responseStartTime {
+                        let endTime = Date()
+                        let thinkingTime = max((firstTokenTime ?? endTime).timeIntervalSince(startTime), 0)
+                        let responseTime = max(endTime.timeIntervalSince(firstTokenTime ?? endTime), 0)
+                        let tokenRateBase = max(responseTime, 0.001)
+                        let tokensPerSecond = Double(tokenCount) / tokenRateBase
+                        statsMessage = "\n\n---\n [\(selectedModel)] \(String(format: "%.1f", tokensPerSecond)) tokens/sec · Time: thinking \(String(format: "%.2f", thinkingTime))s, response \(String(format: "%.2f", responseTime))s"
 
-                    viewModel.updateLastAssistantMessage(
-                        content: fullResponse,
+                        viewModel.updateLastAssistantMessage(
+                            content: fullResponse + statsMessage,
+                            engine: selectedModel
+                        )
+                    }
+                    
+                    try DatabaseManager.shared.insert(
+                        groupId: viewModel.chatId.uuidString,
+                        instruction: UserDefaults.standard.string(forKey: "llmInstruction") ?? "",
+                        question: currentText,
+                        answer: fullResponse + statsMessage,
+                        image: currentImage,
                         engine: selectedModel
                     )
+                    
+                    Task { @MainActor in
+                        await SidebarViewModel.shared.refresh()
+                    }
+                    
+                } catch {
+                    if let index = viewModel.messages.lastIndex(where: { !$0.isUser }) {
+                        viewModel.updateLastAssistantMessage(
+                            content: "\(error.localizedDescription)",
+                            engine: selectedModel
+                        )
+                    }
                 }
                 
-                var statsMessage = ""
-                if let startTime = responseStartTime {
-                    let endTime = Date()
-                    let thinkingTime = max((firstTokenTime ?? endTime).timeIntervalSince(startTime), 0)
-                    let responseTime = max(endTime.timeIntervalSince(firstTokenTime ?? endTime), 0)
-                    let tokenRateBase = max(responseTime, 0.001)
-                    let tokensPerSecond = Double(tokenCount) / tokenRateBase
-                    statsMessage = "\n\n---\n [\(selectedModel)] \(String(format: "%.1f", tokensPerSecond)) tokens/sec · Time: thinking \(String(format: "%.2f", thinkingTime))s, response \(String(format: "%.2f", responseTime))s"
-
-                    viewModel.updateLastAssistantMessage(
-                        content: fullResponse + statsMessage,
-                        engine: selectedModel
-                    )
-                }
-                
-                try DatabaseManager.shared.insert(
-                    groupId: viewModel.chatId.uuidString,
-                    instruction: UserDefaults.standard.string(forKey: "llmInstruction") ?? "",
-                    question: currentText,
-                    answer: fullResponse + statsMessage,
-                    image: currentImage,
-                    engine: selectedModel
-                )
-                
-                Task { @MainActor in
-                    await SidebarViewModel.shared.refresh()
-                }
-                
-            } catch {
-                if let index = viewModel.messages.lastIndex(where: { !$0.isUser }) {
-                    viewModel.updateLastAssistantMessage(
-                        content: "\(error.localizedDescription)",
-                        engine: selectedModel
-                    )
-                }
+                isGenerating = false
+                responseStartTime = nil
+                tokenCount = 0 
             }
-            
-            isGenerating = false
-            responseStartTime = nil
-            tokenCount = 0 
         }
     }
 }
