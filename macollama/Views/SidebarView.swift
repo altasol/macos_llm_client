@@ -71,6 +71,7 @@ struct SidebarView: View {
                             .foregroundColor(.gray)
                     }
                     .buttonStyle(.plain)
+                    .help("Clear search")
                 }
             }
             .padding(8)
@@ -120,6 +121,7 @@ struct SidebarView: View {
                             itemToDelete = chat
                             showingDeleteAlert = true
                         }
+                        .help("Delete chat")
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 1)
@@ -146,6 +148,7 @@ struct SidebarView: View {
                 }
                 .alert("l_del_question".localized, isPresented: $showingDeleteAlert) {
                     Button("l_cancel".localized, role: .cancel) { }
+                        .help("Cancel")
                     Button("l_delete".localized, role: .destructive) {
                         if let chat = itemToDelete {
                             Task {
@@ -156,6 +159,7 @@ struct SidebarView: View {
                             }
                         }
                     }
+                    .help("Delete selected chat")
                 } message: {
                     Text("l_del_question".localized)
                 }

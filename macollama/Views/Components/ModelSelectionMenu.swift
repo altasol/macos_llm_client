@@ -78,6 +78,7 @@ struct ModelSelectionMenu: View {
                 }
                 .buttonStyle(.borderless)
                 .disabled(isLoadingModels)
+                .help("Refresh model list")
             }
             .frame(width: 300)
 
@@ -87,6 +88,7 @@ struct ModelSelectionMenu: View {
             ) {
                 onCopyAllMessages()
             }
+            .help("Copy all messages")
         }
         .onAppear {
             updateAvailableProviders()

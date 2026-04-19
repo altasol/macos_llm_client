@@ -33,10 +33,12 @@ struct ContentView: View {
                 chatViewModel.startNewChat()
             }
             .accessibilityLabel(Text("New Chat"))
+            .help("Start new chat")
             HoverImageButton(imageName: "gearshape") {
                 showingSettings = true
             }
             .accessibilityLabel(Text("Settings"))
+            .help("Open settings")
         }
     }
     
@@ -78,11 +80,13 @@ struct ContentView: View {
             Button("l_settings".localized) {
                 showingSettings = true
             }
+            .help("Open settings")
             Button("l_retry".localized) {
                 Task {
                     await loadModels()
                 }
             }
+            .help("Retry loading models")
         } message: {
             if let errorMessage {
                 Text(errorMessage)

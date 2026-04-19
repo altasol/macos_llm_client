@@ -20,6 +20,7 @@ struct ImagePreviewView: View {
                     .foregroundColor(.gray)
             }
             .buttonStyle(.plain)
+            .help("Remove attachment")
             
             Spacer()
         }
@@ -111,6 +112,7 @@ struct MessageInputView: View {
                 }
             }
             .disabled(isLoadingModels)
+            .help(isGenerating ? "Stop generation" : "Send message")
 
             HoverImageButton(
                 imageName: "doc.badge.plus", 
@@ -120,6 +122,7 @@ struct MessageInputView: View {
                 selectFile()
             }
             .disabled(isLoadingModels)
+            .help("Attach file")
         }
     }
     

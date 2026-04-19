@@ -65,6 +65,7 @@ struct SettingsView: View {
                             }
                             .disabled(isTestingConnection)
                             .buttonStyle(.bordered)
+                            .help("Test Ollama connection")
                         }
                         
                         if let result = connectionTestResult {
@@ -112,6 +113,7 @@ struct SettingsView: View {
                             }
                             .disabled(isTestingLMStudioConnection)
                             .buttonStyle(.bordered)
+                            .help("Test LM Studio connection")
                         }
                         
                         if let result = lmStudioConnectionTestResult {
@@ -298,6 +300,7 @@ struct SettingsView: View {
                             Spacer()
                         }
                     }
+                    .help("Delete all chats")
                 }
                 
 
@@ -311,6 +314,7 @@ struct SettingsView: View {
                         isPresented = false
                         // Models will be reloaded via ContentView's onDismiss handler
                     }
+                    .help("Save and close")
                 }
             }
         }
@@ -318,9 +322,11 @@ struct SettingsView: View {
         .fixedSize()
         .alert("l_delete_all".localized, isPresented: $showingDeleteAlert) {
             Button("l_cancel".localized, role: .cancel) { }
+            .help("Cancel")
             Button("l_delete", role: .destructive) {
                 deleteAllData()
             }
+            .help("Delete all data")
         } message: {
             Text("l_delete_all_question".localized)
         }

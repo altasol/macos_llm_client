@@ -41,6 +41,7 @@ struct SelectableText: View {
                 }) {
                     Label("l_copy".localized, systemImage: "doc.on.doc")
                 }
+                .help("Copy text")
             }
     }
 }
@@ -121,21 +122,25 @@ struct MessageBubble: View {
                                 await handleRetryAction()
                             }
                         }
+                        .help("Retry response")
                         HoverImageButton(imageName: "square.on.square"){
                             Task {
                                 await handleCopyAction()
                             }
                         }
+                        .help("Copy message")
                         HoverImageButton(imageName: "square.and.arrow.down"){
                             Task {
                                 await handleShareAction()
                             }
                         }
+                        .help("Export conversation")
                         HoverImageButton(imageName: "trash"){
                             Task { @MainActor in
                                 showingDeleteAlert = true
                             }
                         }
+                        .help("Delete message")
                     }
                     .foregroundColor(.gray)
                 } else {
@@ -155,6 +160,7 @@ struct MessageBubble: View {
                                 await handleCopyAction()
                             }
                         }
+                        .help("Copy message")
                     }
                     .foregroundColor(.gray)
 
@@ -198,11 +204,13 @@ struct MessageBubble: View {
         .animation(.easeInOut(duration: 0.2), value: showAlert)
         .alert("l_delete_message".localized, isPresented: $showingDeleteAlert) {
             Button("l_cancel".localized, role: .cancel) { }
+                .help("Cancel")
             Button("l_delete".localized, role: .destructive) {
                 Task {
                     await handleDeleteAction()
                 }
             }
+            .help("Delete message")
         } message: {
             Text("l_del_question".localized)
         }
