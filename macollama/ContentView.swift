@@ -112,38 +112,38 @@ struct ContentView: View {
     }
     
     @MainActor
-    func loadModels() async {
-        isLoadingModels = true
+func loadModels() async {
+    isLoadingModels = true
 
-        LLMService.shared.refreshForProviderChange()
+    LLMService.shared.refreshForProviderChange()
 
-        models = []
-        selectedModel = nil
-        
-        // Check if current provider is available
-        if !LLMProvider.availableProviders.contains(selectedProvider) {
-            selectedProvider = LLMProvider.availableProviders.first ?? .ollama
-        }
-        
-        do {
-            let newModels = try await LLMService.shared.listModels()
-            models = newModels
-            
-            if newModels.isEmpty {
-                selectedModel = nil
-            } else if let selected = selectedModel, !newModels.contains(selected) {
-                selectedModel = newModels.first
-            } else if selectedModel == nil {
-                selectedModel = newModels.first
-            }
-        } catch {
-            self.models = []
-            self.selectedModel = nil
-            await showError(error.localizedDescription)
-        }
-        
-        isLoadingModels = false
+    models = []
+    selectedModel = nil
+
+    // Check if current provider is available
+    if !LLMProvider.availableProviders.contains(selectedProvider) {
+        selectedProvider = LLMProvider.availableProviders.first ?? .ollama
     }
+
+    do {
+        let newModels = try await LLMService.shared.listModels()
+        models = newModels
+
+        if newModels.isEmpty {
+            selectedModel = nil
+        } else if let selected = selectedModel, !newModels.contains(selected) {
+            selectedModel = newModels.first
+        } else if selectedModel == nil {
+            selectedModel = newModels.first
+        }
+    } catch {
+        self.models = []
+        self.selectedModel = nil
+        showError(error.localizedDescription)  // Removed 'await' here
+    }
+
+    isLoadingModels = false
+}
     
     @MainActor
     private func showError(_ message: String) {

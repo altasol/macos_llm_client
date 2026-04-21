@@ -6,10 +6,10 @@ struct DetailView: View {
     @Binding var isLoadingModels: Bool
     @ObservedObject private var viewModel = ChatViewModel.shared
     @Namespace private var bottomID
-    @State private var isGenerating = false  
-    @State private var responseStartTime: Date? 
-    @State private var tokenCount: Int = 0 
-    
+    @State private var isGenerating = false
+    @State private var responseStartTime: Date?
+    @State private var tokenCount: Int = 0
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollViewReader { proxy in
@@ -31,7 +31,7 @@ struct DetailView: View {
                     scrollToBottom(proxy: proxy)
                 }
             }
-            
+
             MessageInputView(
                 viewModel: viewModel,
                 selectedModel: $selectedModel,
@@ -45,29 +45,29 @@ struct DetailView: View {
             )
         }
     }
-    
+
     private func scrollToBottom(proxy: ScrollViewProxy) {
         withAnimation(.easeOut(duration: 0.3)) {
             proxy.scrollTo(bottomID, anchor: .bottom)
         }
     }
-    
+
     private func sendMessage() {
         guard let selectedModel = selectedModel,
               !viewModel.messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return
         }
-        
+
         let currentText = viewModel.messageText
         let currentImage = viewModel.selectedImage
-        
+
         viewModel.messageText = ""
         viewModel.selectedImage = nil
-        isGenerating = true  
-        
-        responseStartTime = Date() 
-        tokenCount = 0 
-        
+        isGenerating = true
+
+        responseStartTime = Date()
+        tokenCount = 0
+
         let userMessage = ChatMessage(
             id: viewModel.messages.count * 2,
             content: currentText,
@@ -76,7 +76,7 @@ struct DetailView: View {
             image: currentImage,
             engine: selectedModel
         )
-        
+
         let waitingMessage = ChatMessage(
             id: viewModel.messages.count * 2 + 1,
             content: "...",
@@ -98,7 +98,7 @@ struct DetailView: View {
                         image: currentImage,
                         model: selectedModel
                     )
-                    
+
                     for try await response in stream {
                         if firstTokenTime == nil && !response.isEmpty {
                             firstTokenTime = Date()
@@ -111,7 +111,7 @@ struct DetailView: View {
                             engine: selectedModel
                         )
                     }
-                    
+
                     var statsMessage = ""
                     if let startTime = responseStartTime {
                         let endTime = Date()
@@ -126,7 +126,7 @@ struct DetailView: View {
                             engine: selectedModel
                         )
                     }
-                    
+
                     try DatabaseManager.shared.insert(
                         groupId: viewModel.chatId.uuidString,
                         instruction: UserDefaults.standard.string(forKey: "llmInstruction") ?? "",
@@ -135,11 +135,10 @@ struct DetailView: View {
                         image: currentImage,
                         engine: selectedModel
                     )
-                    
-                    Task { @MainActor in
-                        await SidebarViewModel.shared.refresh()
-                    }
-                    
+
+                    // Fixed: Direct call to refresh() instead of wrapping in Task
+                    SidebarViewModel.shared.refresh()
+
                 } catch {
                     if let index = viewModel.messages.lastIndex(where: { !$0.isUser }) {
                         viewModel.updateLastAssistantMessage(
@@ -148,10 +147,10 @@ struct DetailView: View {
                         )
                     }
                 }
-                
+
                 isGenerating = false
                 responseStartTime = nil
-                tokenCount = 0 
+                tokenCount = 0
             }
         }
     }

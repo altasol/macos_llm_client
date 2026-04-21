@@ -272,7 +272,7 @@ struct MessageBubble: View {
     }
     
     private func handleDeleteAction() async {
-        await deleteMessage()
+        deleteMessage()
     }
     
     private func showTemporaryAlert(_ message: String) {
@@ -359,7 +359,7 @@ struct MessageBubble: View {
                 }
                 
                 // 사이드바 새로고침
-                await SidebarViewModel.shared.refresh()
+                SidebarViewModel.shared.refresh()
                 
                 // 성공 알림
                 await showAlertSafely("l_delete_finish".localized)
